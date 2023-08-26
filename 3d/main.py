@@ -18,10 +18,11 @@ parser.add_argument('--resume', action='store_true', help="continue training cur
 parser.add_argument('--cuda', action='store_true', help="use cuda for training")
 parser.add_argument('--batch-size', type=int, default=1, help="batch size")
 parser.add_argument('--n-image-splits', type=int, default=1)
-parser.add_argument('--print-epoch', action='store_true', help="print epoch to console")
+parser.add_argument('--verbose', action='store_true', help="print epoch to console")
 args = parser.parse_args()
 
 assert args.train or args.eval or args.resume, "You must provide one of --train, --eval or --resume"
+assert sum(map(int, [args.train, args.eval, args.resume])) == 1, "You must only provide one of --train, --eval or --resume"
 
 transform = torchvision.transforms.Compose([
     torchvision.transforms.ToTensor(),
@@ -149,6 +150,7 @@ del parser, transform, pics, cam_pos, cam_rot, model_in, x_batch_splits, y_batch
 
 # main training loop
 if args.train or args.resume:
+    print("Starting/resuming training...")
     for e in range(hyperparams.epochs):
         for i, x, y in zip(range(len(X)), X, Y):
             pred = (model(x) + 1) / 2
@@ -156,20 +158,40 @@ if args.train or args.resume:
             optim.zero_grad()
             loss.backward()
             optim.step()
-            if i % 100 == 0:
-                print(f'Sample {i}')
-        if args.print_epoch:
-            print(f'Epoch {e}')
+        if args.verbose:
+            print(f'Epoch {e}/{hyperparams.epochs}')
 else:
-    warnings.warn("Not fully implemented feature. Will only eval on one hardcoded part of the dataset.")
-    pred = (model(X[0]) + 1) / 2
+    print("Starting evaluation...")
+    pred = []
+    for i, x in enumerate(X):
+        if args.verbose:
+            print(f"Eval sample {i}/{len(X)}")
+        pred.append(((model(x) + 1) / 2).detach().to('cpu'))
+    pred = torch.concat(pred)
 
-if args.train:
+
+if args.train or args.resume:
     torch.save(model, '3d/model.ckpt')
+else:
+    # detach and split images (or parts of images if --n-image-splits is bigger than 1)
+    imgs = pred.detach().to('cpu').transpose(2, 1).numpy()
+    imgs = [imgs[i] for i in range(imgs.shape[0])]
 
-# show the result
-if hyperparams.epochs > 0:
-    plt.imshow(pred.detach().to('cpu').permute((1, 0, 2)).numpy())
+    num_images = len(imgs)
+    num_rows = 1
+    num_cols = num_images
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5))
+
+    # Plot each image in its respective subplot
+    for i in range(num_images):
+        if num_images > 1:
+            ax = axes[i]
+        else:
+            ax = axes  # Handle the case when there's only one image
+
+        ax.imshow(imgs[i])
+        ax.set_title(f'Image(/part) {i + 1}')
+
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
     plt.show()
-
-# todo: inefficiencies >> loading images all into one tensor, then concat, then split, then convert to fourier representation. Could instead do concat on every single tensor and split etc individually and after one another to avoid having lots of temporary memory allocation at once
