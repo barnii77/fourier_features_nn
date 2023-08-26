@@ -21,6 +21,8 @@ parser.add_argument('--n-image-splits', type=int, default=1)
 parser.add_argument('--print-epoch', action='store_true', help="print epoch to console")
 args = parser.parse_args()
 
+assert args.train or args.eval or args.resume, "You must provide one of --train, --eval or --resume"
+
 transform = torchvision.transforms.Compose([
     torchvision.transforms.ToTensor(),
 ])
@@ -121,10 +123,8 @@ if args.train:
         nn.Linear(hyperparams.n_hidden, 3),
         nn.Tanh()
     )
-elif args.eval or args.resume:
-    model = torch.load('3d/model.ckpt')
 else:
-    raise Exception("You must provide one of --train, --eval or --resume")
+    model = torch.load('3d/model.ckpt')
 
 # define the optimizer
 optim = torch.optim.AdamW(model.parameters(), hyperparams.lr)
