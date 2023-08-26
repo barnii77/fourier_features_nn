@@ -35,7 +35,7 @@ for fn in os.listdir(f"3d/{args.path}/"):
         assert json_fn is None, "More than one json file in data directory. Remove all but the necessary one."
         json_fn = fn
 
-assert json_fn is not None, "Could not find a json file containing "
+assert json_fn is not None, "Could not find a json file containing dataset info"
 
 with open(f"3d/{args.path}/{json_fn}") as f:
     data_json = json.load(f)
