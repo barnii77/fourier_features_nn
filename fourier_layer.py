@@ -6,7 +6,8 @@ class FourierLayer(nn.Module):
     def __init__(self, n_fourier_features: int, freq_spacing: str = 'logarithmic', fan_in: int = None, no_grad: bool = True):
         super().__init__()
         self.nff = n_fourier_features
-        if self.fan_in is not None:
+        self.fan_in = fan_in
+        if fan_in is not None:
             self.out_dim = 2 * fan_in * self.nff
         else:
             self.out_dim = None

@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 from PIL import Image
+import wandb
 
 from fourier_layer import FourierLayer  # required for loading the model
 
@@ -22,8 +23,10 @@ def factorize_with_smallest_difference(n):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--path', type=str, default='views')
 parser.add_argument('--cuda', action='store_true')
 parser.add_argument('--n-frames', type=int)
+parser.add_argument('--wandb', type=str, default=None, help="name of wandb project to log this to")
 args = parser.parse_args()
 
 assert not args.cuda or torch.cuda.is_available(), "Cuda is not available. Make sure you have pytorch installed with cuda or run this file without --cuda to use cpu instead."
@@ -67,12 +70,18 @@ def predict_view(position, rotation):
         model_in = model_in.to('cuda')
     model_in = torch.concat([model_in, grid_in], dim=-1)
     model_in = model_in.unsqueeze(0)
-    model_out = model(model_in)
+    model_out = (model(model_in) + 1) / 2
     del model_in
     out = model_out.squeeze(0).to('cpu').detach().transpose(1, 0).numpy()
     del model_out
     return out
 
+
+if args.wandb is not None:
+    wandb.login(anonymous='allow')
+    wandb.init(
+        project=args.wandb
+    )
 
 # Parameters for the animation
 num_frames = args.n_frames
@@ -96,6 +105,8 @@ camera_rotations = [
     for position in camera_positions
 ]
 
+wandb_image_table = wandb.Table(columns=["frames"])  # only used if wandb project name was provided using --wandb
+
 # Generate images using the model for each camera position and rotation
 for frame in range(num_frames):
     camera_position = camera_positions[frame]
@@ -103,6 +114,9 @@ for frame in range(num_frames):
 
     # Feed camera data through the model and get the generated image
     generated_image = predict_view(camera_position, camera_rotation)
+    if args.wandb is not None:
+        wandb_img = wandb.Image(generated_image)
+        wandb_image_table.add_row(wandb_img)
 
     # Display the generated image in the respective subplot
     if num_frames > 1:
@@ -113,6 +127,10 @@ for frame in range(num_frames):
     ax.imshow(generated_image)
     ax.set_title(f'Frame {frame + 1}')
     ax.axis('off')
+
+if args.wandb is not None:
+    wandb.log({'animation/images': wandb_image_table})
+    wandb.finish()
 
 # Adjust layout to prevent overlapping titles and labels
 plt.tight_layout()

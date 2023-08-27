@@ -1,7 +1,19 @@
 {
-  "lr": 1e-3,
-  "epochs": 2000,
+  "learning_rates": [
+    {
+      "lr": 0,
+      "epochs": 4,
+      "checkpoint": false
+    },
+    {
+      "lr": 1e-3,
+      "epochs": 200,
+      "checkpoint": true
+    }
+  ],
   "n_hidden": 32,
   "n_fourier_features": 8,
-  "frequency_spacing": "logarithmic"
+  "frequency_spacing": "logarithmic",
+  "batch_size": 1,
+  "n_image_splits": 1
 }

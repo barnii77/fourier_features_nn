@@ -1,12 +1,13 @@
 import json
 import argparse
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import functional as F
 import torchvision
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
+import wandb
 
 from fourier_layer import FourierLayer
 
@@ -24,14 +25,13 @@ def factorize_with_smallest_difference(n):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--path', type=str, default='data/', help="path to .json file containing the image info")
+parser.add_argument('--path', type=str, default='views', help="path to .json file containing the image info")
 parser.add_argument('--train', action='store_true', help="train a new model")
 parser.add_argument('--eval', action='store_true', help="evaluate currently saved model")
 parser.add_argument('--resume', action='store_true', help="continue training currently saved model")
 parser.add_argument('--cuda', action='store_true', help="use cuda for training")
-parser.add_argument('--batch-size', type=int, default=1, help="batch size")
-parser.add_argument('--n-image-splits', type=int, default=1)
 parser.add_argument('--verbose', action='store_true', help="print epoch to console")
+parser.add_argument('--wandb', type=str, default=None, help="wandb project to log this run to")
 args = parser.parse_args()
 
 assert args.train or args.eval or args.resume, "You must provide one of --train, --eval or --resume"
@@ -41,6 +41,23 @@ assert sum(
 transform = torchvision.transforms.Compose([
     torchvision.transforms.ToTensor(),
 ])
+
+# load hyperparams from file
+with open('3d/hyperparameters.json') as f:
+    hyperparams_dict = json.load(f)
+    hyperparams = argparse.Namespace(**hyperparams_dict)
+
+if args.wandb is not None:
+    wandb.login(anonymous='allow')
+    if args.train or args.resume:
+        wandb.init(
+            project=args.wandb,
+            config=hyperparams_dict
+        )
+    else:
+        wandb.init(
+            project=args.wandb
+        )
 
 # load images
 pics, cam_pos, cam_rot = [], [], []
@@ -69,16 +86,12 @@ pics = torch.concat(pics)
 cam_pos = torch.stack(cam_pos)
 cam_rot = torch.stack(cam_rot)
 
-if args.batch_size == -1:
-    args.batch_size = pics.shape[0]
+if hyperparams.batch_size == -1:
+    hyperparams.batch_size = pics.shape[0]
 assert pics.shape[
-           0] % args.batch_size == 0, f"Cannot divide {pics.shape[0]} images evenly into {args.batch_size} groups"
+           0] % hyperparams.batch_size == 0, f"Cannot divide {pics.shape[0]} images evenly into {hyperparams.batch_size} groups"
 assert pics.shape[
-           1] % args.n_image_splits == 0, f"Cannot horizontally divide images of horizontal size {pics.shape[1]} evenly into {args.n_image_splits} equal segments"
-
-# load hyperparams from file
-with open('3d/hyperparameters.json') as f:
-    hyperparams = argparse.Namespace(**json.load(f))
+           1] % hyperparams.n_image_splits == 0, f"Cannot horizontally divide images of horizontal size {pics.shape[1]} evenly into {hyperparams.n_image_splits} equal segments"
 
 # define model input
 # pure pixel position input + reshape
@@ -111,12 +124,12 @@ model_in = torch.concat([cam_pos, cam_rot, model_in], dim=-1)
 # split model_in into pieces because it requires 600GiB GPU RAM otherwise D:
 X = []
 Y = []
-x_batch_splits = model_in.split(args.batch_size)
-y_batch_splits = pics.split(args.batch_size)
+x_batch_splits = model_in.split(hyperparams.batch_size)
+y_batch_splits = pics.split(hyperparams.batch_size)
 
 for x_batch_split, y_batch_split in zip(x_batch_splits, y_batch_splits):
-    X.extend(x_batch_split.split(x_batch_split.shape[1] // args.n_image_splits, dim=1))
-    Y.extend(y_batch_split.split(y_batch_split.shape[1] // args.n_image_splits, dim=1))
+    X.extend(x_batch_split.split(x_batch_split.shape[1] // hyperparams.n_image_splits, dim=1))
+    Y.extend(y_batch_split.split(y_batch_split.shape[1] // hyperparams.n_image_splits, dim=1))
     del x_batch_split, y_batch_split
 
 # define the model
@@ -124,7 +137,8 @@ if args.train:
     fourier_layer = FourierLayer(
         hyperparams.n_fourier_features,
         hyperparams.frequency_spacing,
-        fan_in=model_in.shape[-1]
+        fan_in=model_in.shape[-1],
+        no_grad=True
     )
     model = nn.Sequential(
         fourier_layer,
@@ -139,7 +153,7 @@ else:
     model = torch.load('3d/model.ckpt')
 
 # define the optimizer
-optim = torch.optim.AdamW(model.parameters(), hyperparams.lr)
+optim = torch.optim.AdamW(model.parameters(), lr=0)
 pred = None
 
 # move to gpu
@@ -159,21 +173,35 @@ if args.cuda:
 # delete unnecessary variables for gpu memory
 del parser, transform, pics, cam_pos, cam_rot, model_in, x_batch_splits, y_batch_splits
 
+losses = []
+n_epochs = 0
+last_checkpoint_epoch_group_idx = 0
+
 # main training loop
 if args.train or args.resume:
     print("Starting/resuming training...")
-    for e in range(hyperparams.epochs):
-        for i, x, y in zip(range(len(X)), X, Y):
-            pred = (model(x) + 1) / 2
-            loss = F.mse_loss(pred, y)
-            optim.zero_grad()
-            loss.backward()
-            optim.step()
-        if args.verbose:
-            print(f'Epoch {e}/{hyperparams.epochs}')
-
-    torch.save(model, '3d/model.ckpt')
-    print("Saved the model to model.ckpt")
+    for epoch_group_idx, lr_with_epochs in enumerate(hyperparams.learning_rates):
+        losses.append([])
+        for i in range(len(optim.param_groups)):
+            optim.param_groups[i]['lr'] = lr_with_epochs['lr']
+        for e in range(lr_with_epochs['epochs']):
+            losses[-1].append([])
+            for i, x, y in zip(range(len(X)), X, Y):
+                pred = (model(x) + 1) / 2
+                L = F.mse_loss(pred, y)
+                optim.zero_grad()
+                L.backward()
+                optim.step()
+                losses[-1][-1].append(L.item())
+            if args.wandb is not None:
+                wandb.log({f"{'train' if args.train else 'resume'}/loss": sum(losses[-1][-1]) / len(losses[-1][-1]), f"{'train' if args.train else 'resume'}/lr": lr_with_epochs['lr']})
+            if args.verbose:
+                print(f'Epoch {n_epochs}   Loss {sum(losses[-1][-1]) / len(losses[-1][-1])}')
+            n_epochs += 1
+        if lr_with_epochs['checkpoint'] and sum(losses[-1][-1]) <= sum(losses[last_checkpoint_epoch_group_idx][-1]):  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
+            last_checkpoint_epoch_group_idx = epoch_group_idx
+            torch.save(model, '3d/model.ckpt')
+            print("Saved the model to model.ckpt")
 else:
     print("Starting evaluation...")
     pred = []
@@ -186,6 +214,11 @@ else:
     # detach and split images (or parts of images if --n-image-splits is bigger than 1)
     imgs = pred.transpose(2, 1).numpy()
     imgs = [imgs[i] for i in range(imgs.shape[0])]
+    if args.wandb is not None:
+        wandb_pred = [wandb.Image(img.to('cpu').detach().numpy()) for img in imgs]
+        wandb_ground_truth = [wandb.Image(x.to('cpu').detach().numpy()) for x in X]
+        wandb_eval_table = wandb.Table(columns=["prediction", "ground_truth"], data=zip(wandb_pred, wandb_ground_truth))
+        wandb.log({"eval/results": wandb_eval_table})
 
     num_images = len(imgs)
     num_rows, num_cols = factorize_with_smallest_difference(num_images)
@@ -205,3 +238,7 @@ else:
     plt.tight_layout()
     print("Showing plots...")
     plt.show()
+
+# in case this code is copied into a notebook
+if args.wandb is not None:
+    wandb.finish()
