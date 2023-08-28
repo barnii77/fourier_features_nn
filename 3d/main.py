@@ -1,9 +1,7 @@
 import json
 import argparse
 import random
-
 import torch
-from torch import nn
 from torch.nn import functional as F
 import torchvision
 import os
@@ -11,7 +9,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import wandb
 
-from fourier_layer import FourierLayer
+from model import Model
 
 
 def factorize_with_smallest_difference(n):
@@ -47,7 +45,10 @@ transform = torchvision.transforms.Compose([
 # load hyperparams from file
 with open('3d/hyperparameters.json') as f:
     hyperparams_dict = json.load(f)
-    hyperparams = argparse.Namespace(**hyperparams_dict)
+    hyperparams = argparse.Namespace(**hyperparams_dict['main.py'])
+
+assert sum([hyperparams.split_distribution[k] for k in ["train", "validation", "test"]]) == 1, "Split distribution (in hyperparameters.json) must sum to 1."
+assert hyperparams.checkpoint_metric in ["train_loss", "validation_loss"], "Checkpoint metric must be one of 'train_loss' or 'validation_loss'"
 
 if args.wandb is not None:
     wandb.login(anonymous='allow')
@@ -142,25 +143,12 @@ y_batch_splits = pics.split(hyperparams.batch_size)
 for x_batch_split, y_batch_split in zip(x_batch_splits, y_batch_splits):
     X.extend(x_batch_split.split(x_batch_split.shape[1] // hyperparams.n_image_splits, dim=1))
     Y.extend(y_batch_split.split(y_batch_split.shape[1] // hyperparams.n_image_splits, dim=1))
-    del x_batch_split, y_batch_split
+
+del x_batch_splits, y_batch_splits, x_batch_split, y_batch_split
 
 # define the model
 if args.train:
-    fourier_layer = FourierLayer(
-        hyperparams.n_fourier_features,
-        hyperparams.frequency_spacing,
-        fan_in=model_in.shape[-1],
-        no_grad=True
-    )
-    model = nn.Sequential(
-        fourier_layer,
-        nn.Linear(fourier_layer.out_dim, hyperparams.n_hidden),
-        nn.ReLU(),
-        nn.Linear(hyperparams.n_hidden, hyperparams.n_hidden),
-        nn.ReLU(),
-        nn.Linear(hyperparams.n_hidden, 3),
-        nn.Tanh()
-    )
+    model = Model(hyperparams.fan_in, hyperparams.fan_out)
 else:
     model = torch.load('3d/model.ckpt')
 
@@ -182,15 +170,70 @@ if args.cuda:
     else:
         raise Exception('Cuda not available -> Failed to move parameters/IO to cuda')
 
+train_val_separation_index = int(len(X) * hyperparams.split_distribution["train"])
+val_test_separation_index = int(train_val_separation_index + len(X) * hyperparams.split_distribution["val"])
+
+X_train, X_val, X_test, Y_train, Y_val, Y_test = (
+    X[:train_val_separation_index],
+    X[train_val_separation_index:val_test_separation_index],
+    X[val_test_separation_index:],
+    Y[:train_val_separation_index],
+    Y[train_val_separation_index:val_test_separation_index],
+    Y[val_test_separation_index:]
+)
+
 # delete unnecessary variables for gpu memory
-del parser, transform, pics, cam_pos, cam_rot, model_in, x_batch_splits, y_batch_splits
+del parser, transform, pics, cam_pos, cam_rot, model_in, x_batch_splits, y_batch_splits, x_batch_split, y_batch_split, X, Y
+
+
+def shuffle_x_y(X, Y):
+    seed = random.getrandbits(64)
+    random.seed(seed)
+    random.shuffle(X)
+    random.seed(seed)
+    random.shuffle(Y)
+
+
+def get_loss(X, Y) -> float:
+    loss = 0
+    for x, y in zip(X, Y):
+        pred = model(x)
+        L = F.mse_loss(pred, y)
+        loss += L.item()
+    loss /= len(X_val)
+    return loss
+
+
+def get_loss_and_preds(X, Y) -> tuple[float, torch.Tensor]:
+    pred = []
+    loss = 0
+    for i, x, y in zip(range(len(X)), X, Y):
+        if args.verbose:
+            print(f"Eval sample {i}/{len(X)}")
+        model_out = model(x)
+        loss += F.mse_loss(model_out, y).item()
+        pred.append(model_out)
+    loss /= len(X)
+    pred = torch.concat(pred)
+    return loss, pred
+
+
+def fit_list_of_samples(X: list[torch.Tensor], Y: list[torch.Tensor], losses: list[list[list[float]]]):
+    for i, x, y in zip(range(len(X)), X, Y):
+        pred = model(x)
+        L = F.mse_loss(pred, y)
+        optim.zero_grad()
+        L.backward()
+        optim.step()
+        losses[-1][-1].append(L.item())
+
 
 # main training loop
 if args.train or args.resume:
     losses = []
     n_epochs = 0
     best_checkpoint_loss = float('inf')
-    loss = float('NaN')
+    train_loss, val_loss = float('NaN'), float('NaN')
     print("Starting/resuming training...")
     for epoch_group_idx, lr_with_epochs in enumerate(hyperparams.learning_rates):
         losses.append([])
@@ -198,58 +241,59 @@ if args.train or args.resume:
             optim.param_groups[i]['lr'] = lr_with_epochs['lr']
         for e in range(lr_with_epochs['epochs']):
             losses[-1].append([])
-            seed = random.getrandbits(64)
-            random.seed(seed)
-            random.shuffle(X)
-            random.seed(seed)
-            random.shuffle(Y)
-            for i, x, y in zip(range(len(X)), X, Y):
-                pred = (model(x) + 1) / 2
-                L = F.mse_loss(pred, y)
-                optim.zero_grad()
-                L.backward()
-                optim.step()
-                losses[-1][-1].append(L.item())
-            loss = sum(losses[-1][-1]) / len(losses[-1][-1])
+            shuffle_x_y(X_train, Y_train)  # shuffle the order of sample batches (not sure if useful)
+            fit_list_of_samples(X_train, Y_train, losses)
+            train_loss = sum(losses[-1][-1]) / len(losses[-1][-1])
             if args.wandb is not None:
-                wandb.log({f"{'train' if args.train else 'resume'}/loss": loss,
+                wandb.log({f"{'train' if args.train else 'resume'}/loss": train_loss,
                            f"{'train' if args.train else 'resume'}/lr": lr_with_epochs['lr']})
             if args.verbose:
-                print(f'Epoch {n_epochs}   Loss {loss}')
+                print(f'Epoch {n_epochs}   Loss {train_loss}')
             n_epochs += 1
-            # todo: do this for both train and val loss (save best train loss model and best val loss model and compare)
+
             if lr_with_epochs['checkpoints'] > 0:  # if you want to checkpoint at all
                 if lr_with_epochs['checkpoints'] > lr_with_epochs['epochs']:
                     raise Exception(f"In epoch group {epoch_group_idx}, checkpoints (={lr_with_epochs['checkpoints']}) was set to something higher than epochs (={lr_with_epochs['epochs']}). You cannot make more checkpoints than there are epochs!")
                 else:
                     is_checkpoint_epoch = (e + 1) % (lr_with_epochs['epochs'] // lr_with_epochs['checkpoints']) == 0
-                if is_checkpoint_epoch and loss <= best_checkpoint_loss:  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
-                    best_checkpoint_loss = loss
+
+                val_loss = get_loss(X_val, Y_val)
+
+                if args.wandb is not None:
+                    wandb.log({f"{'train' if args.train else 'resume'}/val_loss": val_loss})
+
+                # if it's checkpoint time and the val loss is better than before
+                if is_checkpoint_epoch and (val_loss < best_checkpoint_loss if hyperparams.checkpoint_metric == 'validation_loss' else train_loss <= best_checkpoint_loss):  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
+                    best_checkpoint_loss = val_loss if hyperparams.checkpoint_metric == 'validation_loss' else train_loss
                     torch.save(model, '3d/model.ckpt')
                     print("Saved the model to model.ckpt")
         print("Training finished. Saving model if it's better than last checkpoint.")
-        if loss <= best_checkpoint_loss:  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
-            best_checkpoint_loss = loss
+        # sorry in advance to anyone who has to read the next line
+        if val_loss < best_checkpoint_loss if hyperparams.checkpoint_metric == 'validation_loss' else train_loss <= best_checkpoint_loss:  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
             torch.save(model, '3d/model.ckpt')
             print("Saved the model to model.ckpt")
+
+        test_loss = get_loss(X_test, Y_test)
+        wandb.log({f"{'train' if args.train else 'resume'}/test_loss": test_loss})
 else:
     print("Starting evaluation...")
-    pred = []
-    for i, x in enumerate(X):
-        if args.verbose:
-            print(f"Eval sample {i}/{len(X)}")
-        pred.append(((model(x) + 1) / 2).to('cpu').detach())
-    pred = torch.concat(pred)
+    train_loss, pred_train = get_loss_and_preds(X_train, Y_train)
+    val_loss, pred_val = get_loss_and_preds(X_val, Y_val)
+    test_loss, pred_test = get_loss_and_preds(X_test, Y_test)
     print("Generating output plots...")
     # detach and split images (or parts of images if --n-image-splits is bigger than 1)
-    imgs = pred.transpose(2, 1).numpy()
+    imgs = torch.concat([pred_train, pred_val, pred_test], dim=0).to('cpu').detach()
+    split_labels = ["train" for _ in range(pred_train.size(0))] + ["validation" for _ in range(pred_val.size(0))] + ["test" for _ in range(pred_test.size(0))]
+    del pred_train, pred_val, pred_test
     imgs = [imgs[i] for i in range(imgs.shape[0])]
     if args.wandb is not None:
-        wandb_pred = [wandb.Image(img.to('cpu').detach().numpy()) for img in imgs]
-        wandb_ground_truth = [wandb.Image(x.to('cpu').detach().numpy()) for x in X]
-        wandb_eval_table = wandb.Table(columns=["prediction", "ground_truth"], data=zip(wandb_pred, wandb_ground_truth))
-        wandb.log({"eval/results": wandb_eval_table})
+        wandb_pred = [wandb.Image(img.numpy()) for img in imgs]
+        wandb_ground_truth = [wandb.Image(y.to('cpu').detach().numpy()) for y in Y_train + Y_val + Y_test]
+        wandb_eval_table = wandb.Table(columns=["prediction", "ground_truth", "split_label"], data=zip(wandb_pred, wandb_ground_truth, split_labels))
+        wandb.log({"eval/samples": wandb_eval_table, "eval/train_loss": train_loss, "eval/val_loss": val_loss, "eval/test_loss": test_loss})
+        wandb.finish()  # wandb is not going to be used later on anymore
 
+    imgs = [img.transpose(2, 1).numpy() for img in imgs]  # now transpose them for matplotlib
     num_images = len(imgs)
     num_rows, num_cols = factorize_with_smallest_difference(num_images)
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5))
@@ -262,13 +306,9 @@ else:
             ax = axes  # Handle the case when there's only one image
 
         ax.imshow(imgs[i])
-        ax.set_title(f'Image(/part) {i + 1}')
+        ax.set_title(f'Image(/part) from split {split_labels[i]} {i + 1}')
 
     # Adjust layout to prevent overlapping titles and labels
     plt.tight_layout()
     print("Showing plots...")
     plt.show()
-
-# in case this code is copied into a notebook
-if args.wandb is not None:
-    wandb.finish()

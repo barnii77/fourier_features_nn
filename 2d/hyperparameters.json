@@ -4,5 +4,5 @@
   "n_hidden": 512,
   "n_fourier_features": 512,
   "log_epoch_to_console": true,
-  "frequency_spacing": "logarithmic"
+  "frequency_spacing_type": "logarithmic"
 }
