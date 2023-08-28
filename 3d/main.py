@@ -1,5 +1,7 @@
 import json
 import argparse
+import random
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -121,6 +123,16 @@ cam_rot = (cam_rot.view((cam_rot.shape[0], 1, 1, cam_rot.shape[1]))
 # concat
 model_in = torch.concat([cam_pos, cam_rot, model_in], dim=-1)
 
+assert model_in.shape[:-1] == pics.shape[:-1], f"Model input and expected output do not align in shape. {model_in.shape[:-1]=}; {pics.shape[:-1]=}"
+
+# randomly permute the data if program was launched in train or resume mode
+if args.train or args.resume:
+    for dim in range(model_in.dim() - 1):
+        size = model_in.size(dim)
+        permutation = torch.randperm(size)
+        model_in = model_in.index_select(dim, permutation)
+        pics = pics.index_select(dim, permutation)
+
 # split model_in into pieces because it requires 600GiB GPU RAM otherwise D:
 X = []
 Y = []
@@ -173,12 +185,12 @@ if args.cuda:
 # delete unnecessary variables for gpu memory
 del parser, transform, pics, cam_pos, cam_rot, model_in, x_batch_splits, y_batch_splits
 
-losses = []
-n_epochs = 0
-last_checkpoint_epoch_group_idx = 0
-
 # main training loop
 if args.train or args.resume:
+    losses = []
+    n_epochs = 0
+    best_checkpoint_loss = float('inf')
+    loss = float('NaN')
     print("Starting/resuming training...")
     for epoch_group_idx, lr_with_epochs in enumerate(hyperparams.learning_rates):
         losses.append([])
@@ -186,6 +198,11 @@ if args.train or args.resume:
             optim.param_groups[i]['lr'] = lr_with_epochs['lr']
         for e in range(lr_with_epochs['epochs']):
             losses[-1].append([])
+            seed = random.getrandbits(64)
+            random.seed(seed)
+            random.shuffle(X)
+            random.seed(seed)
+            random.shuffle(Y)
             for i, x, y in zip(range(len(X)), X, Y):
                 pred = (model(x) + 1) / 2
                 L = F.mse_loss(pred, y)
@@ -193,13 +210,26 @@ if args.train or args.resume:
                 L.backward()
                 optim.step()
                 losses[-1][-1].append(L.item())
+            loss = sum(losses[-1][-1]) / len(losses[-1][-1])
             if args.wandb is not None:
-                wandb.log({f"{'train' if args.train else 'resume'}/loss": sum(losses[-1][-1]) / len(losses[-1][-1]), f"{'train' if args.train else 'resume'}/lr": lr_with_epochs['lr']})
+                wandb.log({f"{'train' if args.train else 'resume'}/loss": loss,
+                           f"{'train' if args.train else 'resume'}/lr": lr_with_epochs['lr']})
             if args.verbose:
-                print(f'Epoch {n_epochs}   Loss {sum(losses[-1][-1]) / len(losses[-1][-1])}')
+                print(f'Epoch {n_epochs}   Loss {loss}')
             n_epochs += 1
-        if lr_with_epochs['checkpoint'] and sum(losses[-1][-1]) <= sum(losses[last_checkpoint_epoch_group_idx][-1]):  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
-            last_checkpoint_epoch_group_idx = epoch_group_idx
+            # todo: do this for both train and val loss (save best train loss model and best val loss model and compare)
+            if lr_with_epochs['checkpoints'] > 0:  # if you want to checkpoint at all
+                if lr_with_epochs['checkpoints'] > lr_with_epochs['epochs']:
+                    raise Exception(f"In epoch group {epoch_group_idx}, checkpoints (={lr_with_epochs['checkpoints']}) was set to something higher than epochs (={lr_with_epochs['epochs']}). You cannot make more checkpoints than there are epochs!")
+                else:
+                    is_checkpoint_epoch = (e + 1) % (lr_with_epochs['epochs'] // lr_with_epochs['checkpoints']) == 0
+                if is_checkpoint_epoch and loss <= best_checkpoint_loss:  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
+                    best_checkpoint_loss = loss
+                    torch.save(model, '3d/model.ckpt')
+                    print("Saved the model to model.ckpt")
+        print("Training finished. Saving model if it's better than last checkpoint.")
+        if loss <= best_checkpoint_loss:  # want to checkpoint and loss is better than at the end of last checkpointed epoch group (an epoch group is a group of epochs with shared lr)
+            best_checkpoint_loss = loss
             torch.save(model, '3d/model.ckpt')
             print("Saved the model to model.ckpt")
 else:

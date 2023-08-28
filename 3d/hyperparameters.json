@@ -3,17 +3,22 @@
     {
       "lr": 0,
       "epochs": 4,
-      "checkpoint": false
+      "checkpoints": 0
     },
     {
       "lr": 1e-3,
       "epochs": 200,
-      "checkpoint": true
+      "checkpoints": 4
     }
   ],
   "n_hidden": 32,
   "n_fourier_features": 8,
   "frequency_spacing": "logarithmic",
   "batch_size": 1,
-  "n_image_splits": 1
+  "n_image_splits": 1,
+  "permute_training_data": true,
+  "split_distribution": {
+    "train": 0.8,
+    "val": 0.2
+  }
 }
