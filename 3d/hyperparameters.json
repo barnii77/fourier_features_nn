@@ -19,13 +19,14 @@
     "n_image_splits": 1,
     "permute_training_data": true,
     "split_distribution": {
-      "train": 0.8,
-      "validation": 0.15,
-      "test": 0.05
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
     },
     "checkpoint_metric": "validation_loss"
   },
   "model.py": {
-    "n_fourier_features": 8
+    "n_fourier_features": 8,
+    "n_hidden": 32
   }
 }

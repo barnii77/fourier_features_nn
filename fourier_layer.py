@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 
@@ -29,9 +30,9 @@ class FourierLayer(nn.Module):
     def forward_fn(self, x):
         x = x.view(x.shape + (1,))
         if self.freq_spacing_type == 'logarithmic':
-            feature_mul = 2 ** torch.arange(0, self.n_fourier_features, device=x.device)
+            feature_mul = math.pi * 2 ** torch.arange(0, self.n_fourier_features, device=x.device)
         else:
-            feature_mul = torch.arange(1, self.n_fourier_features + 1, device=x.device)
+            feature_mul = math.pi * torch.arange(1, self.n_fourier_features + 1, device=x.device)
         sines = torch.sin(x * feature_mul)
         cosines = torch.cos(x * feature_mul)
         del feature_mul

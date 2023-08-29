@@ -31,7 +31,7 @@ args = parser.parse_args()
 
 assert not args.cuda or torch.cuda.is_available(), "Cuda is not available. Make sure you have pytorch installed with cuda or run this file without --cuda to use cpu instead."
 
-model = torch.load('model.ckpt')
+model = torch.load('3d/model.ckpt')
 
 # get the image size (=resolution)
 json_fn = None
@@ -46,7 +46,7 @@ with open(f"3d/{args.path}/{json_fn}") as f:
     data_json = json.load(f)
 
 img_path = data_json[0]['image']
-resolution = Image.open(img_path).size
+resolution = Image.open('3d/' + img_path).size
 
 grid_in = torch.stack(
     [

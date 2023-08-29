@@ -1,152 +1,252 @@
 [
   {
-    "position": "3, -2, 1",
-    "rotation": "-32.3115, -103.435, -1.44314e-06",
-    "image": "views/screenshot_0-Thu-Aug-24-21-42-24-2023-4.jpg"
+    "position": "3.34396, 2.85222, 4.2219",
+    "rotation": "26.4845, -143.993, -5.03162",
+    "image": "views/screenshot_0-Tue-Aug-29-15-07-42-2023-4.jpg"
   },
   {
-    "position": "-5, -4, -4",
-    "rotation": "-31.9928, 51.3402, 26.3158",
-    "image": "views/screenshot_1-Thu-Aug-24-21-42-24-2023-5.jpg"
+    "position": "1.07583, -4.34705, -0.95736",
+    "rotation": "-71.2652, -41.9611, -43.9158",
+    "image": "views/screenshot_1-Tue-Aug-29-15-07-42-2023-5.jpg"
   },
   {
-    "position": "2, -1, 3",
-    "rotation": "-15.5014, -144.31, -25.8125",
-    "image": "views/screenshot_2-Thu-Aug-24-21-42-24-2023-6.jpg"
+    "position": "-3.00488, -2.01038, -0.182699",
+    "rotation": "-23.8792, 85.7919, 68.4125",
+    "image": "views/screenshot_2-Tue-Aug-29-15-07-42-2023-6.jpg"
   },
   {
-    "position": "-1, 2, -5",
-    "rotation": "21.4167, 21.3099, 31.1038",
-    "image": "views/screenshot_3-Thu-Aug-24-21-42-24-2023-7.jpg"
+    "position": "-1.29082, -4.16824, -2.60189",
+    "rotation": "-58.0831, 22.3579, 18.6909",
+    "image": "views/screenshot_3-Tue-Aug-29-15-07-42-2023-7.jpg"
   },
   {
-    "position": "-1, 5, 2",
-    "rotation": "65.9052, 143.435, -50.0924",
-    "image": "views/screenshot_4-Thu-Aug-24-21-42-24-2023-8.jpg"
+    "position": "-1.07827, 1.09562, -0.907286",
+    "rotation": "46.756, 45.7863, 78.1429",
+    "image": "views/screenshot_4-Tue-Aug-29-15-07-42-2023-8.jpg"
   },
   {
-    "position": "1, -5, 3",
-    "rotation": "-57.6885, -153.565, -67.1715",
-    "image": "views/screenshot_5-Thu-Aug-24-21-42-24-2023-9.jpg"
+    "position": "-4.79817, -0.0279676, -3.1353",
+    "rotation": "8.50508, 64.26, 89.8782",
+    "image": "views/screenshot_5-Tue-Aug-29-15-07-42-2023-9.jpg"
   },
   {
-    "position": "-3, 4, 0",
-    "rotation": "53.1301, 85, 7.37624",
-    "image": "views/screenshot_6-Thu-Aug-24-21-42-24-2023-10.jpg"
+    "position": "2.8978, 1.03696, 2.61719",
+    "rotation": "12.2837, -127.817, -92.5573",
+    "image": "views/screenshot_6-Tue-Aug-29-15-07-42-2023-10.jpg"
   },
   {
-    "position": "2, 5, 2",
-    "rotation": "60.5038, -136, -105.104",
-    "image": "views/screenshot_7-Thu-Aug-24-21-42-24-2023-11.jpg"
+    "position": "2.40753, 2.41142, 2.39427",
+    "rotation": "29.5727, -137.114, -91.3826",
+    "image": "views/screenshot_7-Tue-Aug-29-15-07-42-2023-11.jpg"
   },
   {
-    "position": "5, -5, -2",
-    "rotation": "-42.876, -74.1986, -15.1279",
-    "image": "views/screenshot_8-Thu-Aug-24-21-42-24-2023-12.jpg"
+    "position": "0.723276, 3.39943, -0.0688792",
+    "rotation": "72.8431, -85.0314, -147.044",
+    "image": "views/screenshot_8-Tue-Aug-29-15-07-42-2023-12.jpg"
   },
   {
-    "position": "2, -3, -1",
-    "rotation": "-53.3008, -55.4349, -7.77573",
-    "image": "views/screenshot_9-Thu-Aug-24-21-42-24-2023-13.jpg"
+    "position": "0.347076, -3.70353, -3.22925",
+    "rotation": "-41.8838, -12.2299, 59.8673",
+    "image": "views/screenshot_9-Tue-Aug-29-15-07-42-2023-13.jpg"
   },
   {
-    "position": "2, 1, -4",
-    "rotation": "12.6044, -31.5651, 32.7706",
-    "image": "views/screenshot_10-Thu-Aug-24-21-42-24-2023-14.jpg"
+    "position": "-1.49499, 1.51027, 2.18933",
+    "rotation": "29.4026, 135.914, -42.3528",
+    "image": "views/screenshot_10-Tue-Aug-29-15-07-42-2023-14.jpg"
   },
   {
-    "position": "-1, 2, -2",
-    "rotation": "41.8103, 29.5651, 7.53403",
-    "image": "views/screenshot_11-Thu-Aug-24-21-42-24-2023-15.jpg"
+    "position": "0.206613, -0.561475, -2.80688",
+    "rotation": "-14.0089, 1.30073, 45.7846",
+    "image": "views/screenshot_11-Tue-Aug-29-15-07-42-2023-15.jpg"
   },
   {
-    "position": "0, 4, 5",
-    "rotation": "38.6598, 185, -59.593",
-    "image": "views/screenshot_12-Thu-Aug-24-21-42-25-2023-16.jpg"
+    "position": "0.326346, 1.87795, -1.3686",
+    "rotation": "43.7056, -10.8696, 74.1939",
+    "image": "views/screenshot_12-Tue-Aug-29-15-07-42-2023-16.jpg"
   },
   {
-    "position": "-1, -3, 1",
-    "rotation": "-64.7606, 140, -153.01",
-    "image": "views/screenshot_13-Thu-Aug-24-21-42-25-2023-17.jpg"
+    "position": "2.18833, 4.40145, 1.57405",
+    "rotation": "67.1851, -118.928, -151.824",
+    "image": "views/screenshot_13-Tue-Aug-29-15-07-42-2023-17.jpg"
   },
   {
-    "position": "-4, -1, -3",
-    "rotation": "-11.3099, 43.1301, 121.075",
-    "image": "views/screenshot_14-Thu-Aug-24-21-42-25-2023-18.jpg"
+    "position": "-3.40971, -1.58142, 1.64042",
+    "rotation": "-30.2968, 109.022, -150.028",
+    "image": "views/screenshot_14-Tue-Aug-29-15-07-42-2023-18.jpg"
   },
   {
-    "position": "-2, -4, 5",
-    "rotation": "-36.6043, 153.199, -151.674",
-    "image": "views/screenshot_15-Thu-Aug-24-21-42-25-2023-19.jpg"
+    "position": "-3.48357, 3.21528, -2.5868",
+    "rotation": "36.614, 53.4284, 159.466",
+    "image": "views/screenshot_15-Tue-Aug-29-15-07-43-2023-19.jpg"
   },
   {
-    "position": "3, -2, -3",
-    "rotation": "-25.2394, -48, 141.715",
-    "image": "views/screenshot_16-Thu-Aug-24-21-42-25-2023-20.jpg"
+    "position": "4.05562, -3.77297, -2.12615",
+    "rotation": "-49.3112, -54.7649, -138.882",
+    "image": "views/screenshot_16-Tue-Aug-29-15-07-43-2023-20.jpg"
   },
   {
-    "position": "-1, -1, 5",
-    "rotation": "-11.0958, 167.69, -152.648",
-    "image": "views/screenshot_17-Thu-Aug-24-21-42-25-2023-21.jpg"
+    "position": "4.98918, -1.87794, 0.718418",
+    "rotation": "-18.2468, -90.5045, -168.514",
+    "image": "views/screenshot_17-Tue-Aug-29-15-07-43-2023-21.jpg"
   },
   {
-    "position": "-3, 5, 5",
-    "rotation": "40.6129, 152.036, -140.427",
-    "image": "views/screenshot_18-Thu-Aug-24-21-42-25-2023-22.jpg"
+    "position": "-0.637235, 4.3825, 1.74063",
+    "rotation": "72.3413, 157.452, 119.23",
+    "image": "views/screenshot_18-Tue-Aug-29-15-07-43-2023-22.jpg"
   },
   {
-    "position": "-4, 1, 2",
-    "rotation": "12.6044, 106.565, -125.583",
-    "image": "views/screenshot_19-Thu-Aug-24-21-42-25-2023-23.jpg"
+    "position": "3.09098, 0.454065, 0.379491",
+    "rotation": "-0.439808, -103.27, 85.682",
+    "image": "views/screenshot_19-Tue-Aug-29-15-07-43-2023-23.jpg"
   },
   {
-    "position": "0, -3, 4",
-    "rotation": "-36.8699, 182, -72.3081",
-    "image": "views/screenshot_20-Thu-Aug-24-21-42-25-2023-24.jpg"
+    "position": "0.10763, -0.713297, -1.1739",
+    "rotation": "-31.2727, -5.73917, -157.315",
+    "image": "views/screenshot_20-Tue-Aug-29-15-07-43-2023-24.jpg"
   },
   {
-    "position": "-3, -4, 5",
-    "rotation": "-34.4499, 149.036, -90.3962",
-    "image": "views/screenshot_21-Thu-Aug-24-21-42-25-2023-25.jpg"
+    "position": "-3.55861, -1.79686, -4.20153",
+    "rotation": "-20.6244, 48.2429, -147.459",
+    "image": "views/screenshot_21-Tue-Aug-29-15-07-43-2023-25.jpg"
   },
   {
-    "position": "4, -5, -1",
-    "rotation": "-50.4903, -70.9638, 52.3166",
-    "image": "views/screenshot_22-Thu-Aug-24-21-42-25-2023-26.jpg"
+    "position": "-0.813413, -1.27725, -3.2696",
+    "rotation": "-18.3097, 8.53349, -161.171",
+    "image": "views/screenshot_22-Tue-Aug-29-15-07-43-2023-26.jpg"
   },
   {
-    "position": "-2, -3, 0",
-    "rotation": "-56.3099, 92, -121.906",
-    "image": "views/screenshot_23-Thu-Aug-24-21-42-25-2023-27.jpg"
+    "position": "-0.273339, -3.98844, 3.97108",
+    "rotation": "-42.9951, 185.662, 141.117",
+    "image": "views/screenshot_23-Tue-Aug-29-15-07-43-2023-27.jpg"
   },
   {
-    "position": "-4, 1, 1",
-    "rotation": "13.633, 98.0362, -103.73",
-    "image": "views/screenshot_24-Thu-Aug-24-21-42-25-2023-28.jpg"
+    "position": "2.42005, 4.79397, 2.86871",
+    "rotation": "43.4389, -149.269, 32.5725",
+    "image": "views/screenshot_24-Tue-Aug-29-15-07-43-2023-28.jpg"
   },
   {
-    "position": "-3, 1, 4",
-    "rotation": "11.3099, 139.13, -119.72",
-    "image": "views/screenshot_25-Thu-Aug-24-21-42-25-2023-29.jpg"
+    "position": "4.934, -4.14026, -1.30012",
+    "rotation": "-37.7896, -65.9193, -78.8051",
+    "image": "views/screenshot_25-Tue-Aug-29-15-07-43-2023-29.jpg"
   },
   {
-    "position": "2, 4, 5",
-    "rotation": "36.6043, -154.199, -160.396",
-    "image": "views/screenshot_26-Thu-Aug-24-21-42-25-2023-30.jpg"
+    "position": "-4.69487, 4.59912, 3.94418",
+    "rotation": "37.6034, 130.31, 68.8657",
+    "image": "views/screenshot_26-Tue-Aug-29-15-07-43-2023-30.jpg"
   },
   {
-    "position": "3, 1, -3",
-    "rotation": "13.2627, -44, 140.099",
-    "image": "views/screenshot_27-Thu-Aug-24-21-42-25-2023-31.jpg"
+    "position": "4.68542, 0.90613, 3.65311",
+    "rotation": "0.973391, -131.685, -43.7628",
+    "image": "views/screenshot_27-Tue-Aug-29-15-07-43-2023-31.jpg"
   },
   {
-    "position": "1, -5, -3",
-    "rotation": "-57.6885, -16.4349, 127.312",
-    "image": "views/screenshot_28-Thu-Aug-24-21-42-25-2023-32.jpg"
+    "position": "4.91269, -4.13493, 3.39252",
+    "rotation": "-41.1834, -128.38, -46.977",
+    "image": "views/screenshot_28-Tue-Aug-29-15-07-43-2023-32.jpg"
   },
   {
-    "position": "-1, -4, 0",
-    "rotation": "-75.9638, 100, -133.425",
-    "image": "views/screenshot_29-Thu-Aug-24-21-42-25-2023-33.jpg"
+    "position": "-1.3894, 4.79492, 3.26632",
+    "rotation": "43.7284, 157.953, -48.4565",
+    "image": "views/screenshot_29-Tue-Aug-29-15-07-43-2023-33.jpg"
+  },
+  {
+    "position": "-1.11546, -1.2527, 0.694187",
+    "rotation": "-37.1234, 113.789, -115.017",
+    "image": "views/screenshot_30-Tue-Aug-29-15-07-43-2023-34.jpg"
+  },
+  {
+    "position": "3.07036, 2.36865, -1.73235",
+    "rotation": "37.3678, -62.7962, 105.036",
+    "image": "views/screenshot_31-Tue-Aug-29-15-07-43-2023-35.jpg"
+  },
+  {
+    "position": "2.20894, 3.90592, -1.37231",
+    "rotation": "55.2678, -65.9981, 97.8591",
+    "image": "views/screenshot_32-Tue-Aug-29-15-07-43-2023-36.jpg"
+  },
+  {
+    "position": "-1.39313, -3.22521, -3.5782",
+    "rotation": "-30.1941, 17.1333, 173.985",
+    "image": "views/screenshot_33-Tue-Aug-29-15-07-43-2023-37.jpg"
+  },
+  {
+    "position": "-3.66385, -0.980392, -0.749431",
+    "rotation": "-8.53972, 85.365, -165.34",
+    "image": "views/screenshot_34-Tue-Aug-29-15-07-43-2023-38.jpg"
+  },
+  {
+    "position": "2.33632, 4.45196, -3.7989",
+    "rotation": "36.2981, -36.9772, 148.828",
+    "image": "views/screenshot_35-Tue-Aug-29-15-07-43-2023-39.jpg"
+  },
+  {
+    "position": "-0.188837, -4.01019, 0.435748",
+    "rotation": "-84.6388, 162.134, -126.833",
+    "image": "views/screenshot_36-Tue-Aug-29-15-07-43-2023-40.jpg"
+  },
+  {
+    "position": "3.87845, -2.79858, -4.45659",
+    "rotation": "-33.4039, -32.7557, 66.2527",
+    "image": "views/screenshot_37-Tue-Aug-29-15-07-43-2023-41.jpg"
+  },
+  {
+    "position": "-4.97957, 4.72104, 1.70274",
+    "rotation": "47.977, 118.151, -44.8961",
+    "image": "views/screenshot_38-Tue-Aug-29-15-07-43-2023-42.jpg"
+  },
+  {
+    "position": "-0.064126, -4.40421, 2.57426",
+    "rotation": "-54.0842, 169.217, -47.7998",
+    "image": "views/screenshot_39-Tue-Aug-29-15-07-43-2023-43.jpg"
+  },
+  {
+    "position": "3.71821, 0.967954, 4.26135",
+    "rotation": "2.00816, -141.257, -9.43673",
+    "image": "views/screenshot_40-Tue-Aug-29-15-07-43-2023-44.jpg"
+  },
+  {
+    "position": "2.0054, 3.74793, 3.91086",
+    "rotation": "31.4647, -145.124, -19.8051",
+    "image": "views/screenshot_41-Tue-Aug-29-15-07-43-2023-45.jpg"
+  },
+  {
+    "position": "1.64352, -0.915447, -0.00138375",
+    "rotation": "-25.2816, -83.4766, -48.5513",
+    "image": "views/screenshot_42-Tue-Aug-29-15-07-43-2023-46.jpg"
+  },
+  {
+    "position": "-3.53347, 1.05741, -3.51641",
+    "rotation": "13.2932, 52.7171, 59.1196",
+    "image": "views/screenshot_43-Tue-Aug-29-15-07-44-2023-47.jpg"
+  },
+  {
+    "position": "-3.31247, -1.08377, 0.386187",
+    "rotation": "-13.4723, 87.3552, 69.7278",
+    "image": "views/screenshot_44-Tue-Aug-29-15-07-44-2023-48.jpg"
+  },
+  {
+    "position": "-4.21852, 2.33289, -3.29924",
+    "rotation": "17.8413, 44.8871, 82.6824",
+    "image": "views/screenshot_45-Tue-Aug-29-15-07-44-2023-49.jpg"
+  },
+  {
+    "position": "1.19875, -4.94484, 3.16051",
+    "rotation": "-49.8553, -166.065, -109.935",
+    "image": "views/screenshot_46-Tue-Aug-29-15-07-44-2023-50.jpg"
+  },
+  {
+    "position": "1.32015, -3.27685, -4.19774",
+    "rotation": "-34.317, -24.9751, 75.6242",
+    "image": "views/screenshot_47-Tue-Aug-29-15-07-44-2023-51.jpg"
+  },
+  {
+    "position": "-0.623064, 1.44343, -3.58213",
+    "rotation": "16.7306, 2.38738, 74.1011",
+    "image": "views/screenshot_48-Tue-Aug-29-15-07-44-2023-52.jpg"
+  },
+  {
+    "position": "-2.87041, -1.1503, -1.98258",
+    "rotation": "-14.2493, 54.3798, 88.3911",
+    "image": "views/screenshot_49-Tue-Aug-29-15-07-44-2023-53.jpg"
   }
 ]
