@@ -27,6 +27,7 @@ parser.add_argument('--path', type=str, default='views')
 parser.add_argument('--cuda', action='store_true')
 parser.add_argument('--n-frames', type=int)
 parser.add_argument('--wandb', type=str, default=None, help="name of wandb project to log this to")
+parser.add_argument('--n-image-splits', type=int, default=1, help="number of times the input that produces an image should be split (because out of gpu ram or something")
 args = parser.parse_args()
 
 assert not args.cuda or torch.cuda.is_available(), "Cuda is not available. Make sure you have pytorch installed with cuda or run this file without --cuda to use cpu instead."
@@ -49,32 +50,38 @@ with torch.no_grad():
     img_path = data_json[0]['image']
     resolution = Image.open('3d/' + img_path).size
 
-    grid_in = torch.stack(
+    grid_ins = torch.stack(
         [
             torch.linspace(-1, 1, resolution[0]).unsqueeze(-1).repeat_interleave(resolution[1], dim=1),
             torch.linspace(-1, 1, resolution[1]).unsqueeze(0).repeat_interleave(resolution[0], dim=0)
         ],
         dim=-1
     )
+    grid_ins = list(grid_ins.split(grid_ins.shape[0] // args.n_image_splits))
     if args.cuda:
         model = model.to('cuda')
-        grid_in = grid_in.to('cuda')
+        for i in range(len(grid_ins)):
+            grid_ins[i] = grid_ins[i].to('cuda')
 
     # Empty function for feeding data through the model
     def predict_view(position, rotation):
-        model_in = (torch.tensor(position + rotation, dtype=torch.float32)
-                    .view((1, 1, -1))
-                    .repeat_interleave(resolution[0], dim=0)
-                    .repeat_interleave(resolution[1], dim=1))
-        if args.cuda:
-            model_in = model_in.to('cuda')
-        model_in = torch.concat([model_in, grid_in], dim=-1)
-        model_in = model_in.unsqueeze(0)
-        model_out = (model(model_in) + 1) / 2
-        del model_in
-        out = model_out.squeeze(0).to('cpu').detach().transpose(1, 0).numpy()
-        del model_out
-        return out
+        outs = []
+        for grid_in in grid_ins:
+            model_in = (torch.tensor(position + rotation, dtype=torch.float32)
+                        .view((1, 1, -1))
+                        .repeat_interleave(grid_in.shape[0], dim=0)
+                        .repeat_interleave(grid_in.shape[1], dim=1))
+            if args.cuda:
+                model_in = model_in.to('cuda')
+            model_in = torch.concat([model_in, grid_in], dim=-1)
+            model_in = model_in.unsqueeze(0)
+            model_out = (model(model_in) + 1) / 2
+            del model_in
+            outs.append(model_out.squeeze(0).to('cpu').detach())
+            del model_out
+        out = torch.concat(outs)
+        del outs
+        return out.transpose(1, 0).numpy()
 
 
     if args.wandb is not None:
@@ -116,7 +123,7 @@ with torch.no_grad():
         generated_image = predict_view(camera_position, camera_rotation)
         if args.wandb is not None:
             wandb_img = wandb.Image(generated_image)
-            wandb_image_table.add_row(wandb_img)
+            wandb_image_table.add_data(wandb_img)
 
         # Display the generated image in the respective subplot
         if num_frames > 1:
