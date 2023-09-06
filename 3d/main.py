@@ -286,43 +286,44 @@ if args.train or args.resume:
         wandb.finish()
     print("Loss on test split:", test_loss)
 else:
-    print("Starting evaluation...")
-    train_loss, pred_train = get_loss_and_preds(X_train, Y_train, detach_pred=True)
-    val_loss, pred_val = get_loss_and_preds(X_val, Y_val, detach_pred=True)
-    test_loss, pred_test = get_loss_and_preds(X_test, Y_test, detach_pred=True)
-    print("Generating output plots...")
-    # detach and split images (or parts of images if --n-image-splits is bigger than 1)
-    imgs = torch.concat([pred_train, pred_val, pred_test], dim=0).to('cpu').transpose(2, 1).detach().numpy()
-    split_labels = ["train" for _ in range(pred_train.size(0))] + ["validation" for _ in range(pred_val.size(0))] + [
-        "test" for _ in range(pred_test.size(0))]
+    with torch.no_grad():
+        print("Starting evaluation...")
+        train_loss, pred_train = get_loss_and_preds(X_train, Y_train, detach_pred=True)
+        val_loss, pred_val = get_loss_and_preds(X_val, Y_val, detach_pred=True)
+        test_loss, pred_test = get_loss_and_preds(X_test, Y_test, detach_pred=True)
+        print("Generating output plots...")
+        # detach and split images (or parts of images if --n-image-splits is bigger than 1)
+        imgs = torch.concat([pred_train, pred_val, pred_test], dim=0).to('cpu').transpose(2, 1).detach().numpy()
+        split_labels = ["train" for _ in range(pred_train.size(0))] + ["validation" for _ in range(pred_val.size(0))] + [
+            "test" for _ in range(pred_test.size(0))]
 
-    del pred_train, pred_val, pred_test
+        del pred_train, pred_val, pred_test
 
-    imgs = [imgs[i] for i in range(imgs.shape[0])]
-    if args.wandb is not None:
-        wandb_pred = [wandb.Image(img) for img in imgs]
-        wandb_ground_truth = [wandb.Image(y.to('cpu').transpose(2, 1).detach().numpy()) for y in Y_train + Y_val + Y_test]
-        wandb_eval_table = wandb.Table(columns=["prediction", "ground_truth", "split_label"],
-                                       data=list(map(list, zip(wandb_pred, wandb_ground_truth, split_labels))))
-        wandb.log({"eval/samples": wandb_eval_table, "eval/train_loss": train_loss, "eval/val_loss": val_loss,
-                   "eval/test_loss": test_loss})
-        wandb.finish()  # wandb is not going to be used later on anymore
+        imgs = [imgs[i] for i in range(imgs.shape[0])]
+        if args.wandb is not None:
+            wandb_pred = [wandb.Image(img) for img in imgs]
+            wandb_ground_truth = [wandb.Image(y.to('cpu').transpose(2, 1).detach().numpy()) for y in Y_train + Y_val + Y_test]
+            wandb_eval_table = wandb.Table(columns=["prediction", "ground_truth", "split_label"],
+                                           data=list(map(list, zip(wandb_pred, wandb_ground_truth, split_labels))))
+            wandb.log({"eval/samples": wandb_eval_table, "eval/train_loss": train_loss, "eval/val_loss": val_loss,
+                       "eval/test_loss": test_loss})
+            wandb.finish()  # wandb is not going to be used later on anymore
 
-    num_images = len(imgs)
-    num_rows, num_cols = factorize_with_smallest_difference(num_images)
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5))
+        num_images = len(imgs)
+        num_rows, num_cols = factorize_with_smallest_difference(num_images)
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(5 * num_cols, 5))
 
-    # Plot each image in its respective subplot
-    for i in range(num_images):
-        if num_images > 1:
-            ax = axes[i]
-        else:
-            ax = axes  # Handle the case when there's only one image
+        # Plot each image in its respective subplot
+        for i in range(num_images):
+            if num_images > 1:
+                ax = axes[i]
+            else:
+                ax = axes  # Handle the case when there's only one image
 
-        ax.imshow(imgs[i])
-        ax.set_title(f'Image(/part) from split {split_labels[i]} {i + 1}')
+            ax.imshow(imgs[i])
+            ax.set_title(f'Image(/part) from split {split_labels[i]} {i + 1}')
 
-    # Adjust layout to prevent overlapping titles and labels
-    plt.tight_layout()
-    print("Showing plots...")
-    plt.show()
+        # Adjust layout to prevent overlapping titles and labels
+        plt.tight_layout()
+        print("Showing plots...")
+        plt.show()
